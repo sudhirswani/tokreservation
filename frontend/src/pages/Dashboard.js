@@ -7,7 +7,7 @@ export default function Dashboard() {
     attendees: "",
     start_time: "",
     end_time: "",
-    user_id: "demo-user-id" // replace after auth
+    user_id: localStorage.getItem("user_id")
   });
 
   const handleBooking = async () => {

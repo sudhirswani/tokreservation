@@ -6,13 +6,17 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    try {
-      await API.post("/login", { email, password });
-      alert("Login successful");
-    } catch (err) {
-      alert("Login failed");
-    }
-  };
+  try {
+    const res = await API.post("/login", { email, password });
+
+    localStorage.setItem("user_id", res.data.user_id); // ✅ store user
+
+    alert("Login successful");
+    window.location.href = "/dashboard"; // redirect
+  } catch (err) {
+    alert("Login failed");
+  }
+};
 
   return (
     <div>
