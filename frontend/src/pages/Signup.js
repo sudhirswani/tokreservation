@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
 
 export default function Signup() {
@@ -8,24 +9,160 @@ export default function Signup() {
     mobile: "",
     password: "",
   });
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSignup = async () => {
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSignup = async (event) => {
+    event.preventDefault();
+    setStatus({ type: "", message: "" });
+    setIsSubmitting(true);
+
     try {
       await API.post("/signup", form);
-      alert("Signup successful");
+      setStatus({ type: "success", message: "Account created! Redirecting to login..." });
+      setTimeout(() => navigate("/login"), 800);
     } catch (err) {
-      alert("Signup failed");
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Signup failed. Please verify the form details and try again.";
+      setStatus({ type: "error", message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div>
-      <h2>Signup</h2>
-      <input placeholder="Name" onChange={(e) => setForm({...form, name: e.target.value})} />
-      <input placeholder="Email" onChange={(e) => setForm({...form, email: e.target.value})} />
-      <input placeholder="Mobile" onChange={(e) => setForm({...form, mobile: e.target.value})} />
-      <input placeholder="Password" type="password" onChange={(e) => setForm({...form, password: e.target.value})} />
-      <button onClick={handleSignup}>Signup</button>
+    <div className="min-vh-100 d-flex align-items-center bg-light py-5">
+      <div className="container">
+        <div className="row justify-content-center">
+          <div className="col-sm-10 col-md-8 col-lg-6">
+            <div className="card shadow-sm border-0">
+              <div className="card-body p-4 p-md-5">
+                <h1 className="h3 fw-bold mb-1 text-center">Create your account</h1>
+                <p className="text-muted text-center mb-4">
+                  Join the meditation community and reserve the hall in just a few clicks.
+                </p>
+
+                <form onSubmit={handleSignup}>
+                  <div className="mb-3">
+                    <label htmlFor="name" className="form-label">
+                      Full name
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      className="form-control form-control-lg"
+                      placeholder="Enter your full name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="email" className="form-label">
+                      Email address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      className="form-control form-control-lg"
+                      placeholder="you@example.com"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="mobile" className="form-label">
+                      Mobile number
+                    </label>
+                    <input
+                      id="mobile"
+                      name="mobile"
+                      type="tel"
+                      className="form-control form-control-lg"
+                      placeholder="e.g. +1 555 123 4567"
+                      value={form.mobile}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="password" className="form-label">
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      className="form-control form-control-lg"
+                      placeholder="Create a secure password"
+                      value={form.password}
+                      onChange={handleChange}
+                      minLength={6}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-success w-100 btn-lg"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        ></span>
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create account"
+                    )}
+                  </button>
+                </form>
+
+                {status.message && (
+                  <div
+                    className={`alert mt-4 mb-0 alert-${
+                      status.type === "error" ? "danger" : "success"
+                    }`}
+                    role="alert"
+                  >
+                    {status.message}
+                  </div>
+                )}
+
+                <p className="text-center text-muted mt-4 mb-0">
+                  Already have an account?{" "}
+                  <Link to="/login" className="text-decoration-none">
+                    Sign in here
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+
+            <p className="text-center text-muted mt-3 mb-0 small">
+              Your information is used only to manage hall reservations.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
