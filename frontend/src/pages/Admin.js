@@ -5,8 +5,8 @@ import API from "../api";
 function Admin() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
+  //const [error, setError] = useState("");
+  //const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [scheduleFromDate, setScheduleFromDate] = useState("");
@@ -207,14 +207,14 @@ function Admin() {
     }
   };
 
-  const clearFilters = () => {
+  /*const clearFilters = () => {
     setSearch("");
     setStatusFilter("");
     setScheduleFromDate("");
     setScheduleFromTime("");
     setScheduleToDate("");
     setScheduleToTime("");
-  };
+  };*/
 
   const openConfirmModal = (booking, actionType) => {
     setConfirmData({
