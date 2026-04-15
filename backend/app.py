@@ -15,8 +15,12 @@ from functools import wraps
 load_dotenv()
 app = Flask(__name__)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")
-CORS(app, origins=[FRONTEND_URL] if FRONTEND_URL else "*")
+#CORS(app, origins=[FRONTEND_URL] if FRONTEND_URL else "*")
 #CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=[
+    "http://localhost:3000",
+    "https://tokreservation.vercel.app"
+], supports_credentials=True)
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = psycopg2.connect(DATABASE_URL or "postgresql://postgres.aijoxnrsgaietqkhbopg:E1ryNPiQby2hTp39@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")  # same as used in login
