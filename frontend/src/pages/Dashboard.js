@@ -352,7 +352,7 @@ export default function Dashboard() {
             ) : (
               <>
                 {calendarView === "month" && (
-                  <div className="table-responsive rounded-3 overflow-hidden border border-1 border-secondary-subtle">
+                  <div className="table-responsive rounded-3 border border-1 border-secondary-subtle">
                     <table className="table table-bordered calendar-table mb-0 rounded-3" style={{ borderCollapse: 'collapse' }}>
                       <thead>
                         <tr>
@@ -408,7 +408,7 @@ export default function Dashboard() {
                 )}
 
                 {calendarView === "week" && (
-                  <div className="table-responsive rounded-3 overflow-hidden border border-1 border-secondary-subtle">
+                  <div className="table-responsive rounded-3 border border-1 border-secondary-subtle">
                     <table className="table table-bordered calendar-table mb-0 rounded-3" style={{ borderCollapse: 'collapse' }}>
                       <thead>
                         <tr>
