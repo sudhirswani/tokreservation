@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback  } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
@@ -91,7 +91,7 @@ function MyBookings() {
     return new Date(`${booking.booking_date}T${time}:00`);
   };
 
-  const getSortValue = (booking, key) => {
+  const getSortValue = useCallback((booking, key) => {
     switch (key) {
       case "purpose":
         return (booking.purpose || "").toLowerCase();
@@ -103,7 +103,7 @@ function MyBookings() {
       default:
         return getBookingStart(booking)?.getTime() || 0;
     }
-  };
+  }, []);
 
   const filteredSortedBookings = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -140,7 +140,7 @@ function MyBookings() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [bookings, search, statusFilter, scheduleFromDate, scheduleFromTime, scheduleToDate, scheduleToTime, sortBy, sortDirection]);
+  }, [bookings, search, statusFilter, scheduleFromDate, scheduleFromTime, scheduleToDate, scheduleToTime, sortBy, sortDirection, getSortValue]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSortedBookings.length / rowsPerPage));
 

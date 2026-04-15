@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
@@ -65,7 +65,7 @@ export default function AuditLogs() {
     return parts.length ? parts.join(" | ") : "—";
   };
 
-  const getSortValue = (log, key) => {
+  const getSortValue = useCallback((log, key) => {
     switch (key) {
       case "action":
         return (log.action || "").toLowerCase();
@@ -79,7 +79,7 @@ export default function AuditLogs() {
       default:
         return new Date(log.timestamp).getTime() || 0;
     }
-  };
+  }, []);
 
   const filteredSortedLogs = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -119,7 +119,7 @@ export default function AuditLogs() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [logs, search, timestampFromDate, timestampFromTime, timestampToDate, timestampToTime, sortBy, sortDirection]);
+  }, [logs, search, timestampFromDate, timestampFromTime, timestampToDate, timestampToTime, sortBy, sortDirection,getSortValue]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSortedLogs.length / rowsPerPage));
 

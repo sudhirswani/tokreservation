@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
 function Admin() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  //const [error, setError] = useState("");
-  //const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
+  const [error, setError] = useState("");
+  const [actionMessage, setActionMessage] = useState({ type: "", text: "" });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [scheduleFromDate, setScheduleFromDate] = useState("");
@@ -119,21 +119,21 @@ function Admin() {
     return new Date(`${booking.booking_date}T${time}:00`);
   };
 
-  const getSortValue = (booking, key) => {
-    switch (key) {
-      case "user_name":
-        return (booking.user_name || booking.email || "").toLowerCase();
-      case "purpose":
-        return (booking.purpose || "").toLowerCase();
-      case "status":
-        return (booking.status || "").toLowerCase();
-      case "created_at":
-        return new Date(booking.createDate || booking.created_at || 0).getTime();
-      case "booking_date":
-      default:
-        return getBookingStart(booking)?.getTime() || 0;
-    }
-  };
+  const getSortValue = useCallback((booking, key) => {
+  switch (key) {
+    case "user_name":
+      return (booking.user_name || booking.email || "").toLowerCase();
+    case "purpose":
+      return (booking.purpose || "").toLowerCase();
+    case "status":
+      return (booking.status || "").toLowerCase();
+    case "created_at":
+      return new Date(booking.createDate || booking.created_at || 0).getTime();
+    case "booking_date":
+    default:
+      return getBookingStart(booking)?.getTime() || 0;
+  }
+}, []);
 
   const filteredSortedBookings = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -179,7 +179,7 @@ function Admin() {
     });
 
     return sorted;
-  }, [bookings, search, statusFilter, scheduleFromDate, scheduleFromTime, scheduleToDate, scheduleToTime, sortBy, sortDirection]);
+  }, [bookings, search, statusFilter, scheduleFromDate, scheduleFromTime, scheduleToDate, scheduleToTime, sortBy, sortDirection,getSortValue]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSortedBookings.length / rowsPerPage));
 
@@ -284,6 +284,16 @@ function Admin() {
 
         <div className="card shadow-sm border-0">
           <div className="card-body p-4">
+                {/* ✅ ADD HERE */}
+            {error && (
+              <div className="alert alert-danger">{error}</div>
+            )}
+
+            {actionMessage.text && (
+              <div className={`alert alert-${actionMessage.type}`}>
+                {actionMessage.text}
+              </div>
+            )}
             <div className="d-flex justify-content-between flex-wrap gap-3 align-items-center mb-4">
               <div>
                 <h2 className="h5 mb-1">All booking requests</h2>
