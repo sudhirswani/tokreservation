@@ -111,6 +111,21 @@ def book(user_id, role):
         return jsonify({"error": "End time must be later than start time."}), 400
 
     repeat_until_str = (data.get("repeat_until") or "").strip()
+    repeat_weeks_raw = data.get("repeat_weeks")
+    repeat_weeks = None
+
+    if repeat_weeks_raw not in (None, ""):
+        try:
+            repeat_weeks = int(repeat_weeks_raw)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Repeat weeks must be a whole number between 1 and 52."}), 400
+
+        if repeat_weeks < 1 or repeat_weeks > 52:
+            return jsonify({"error": "Repeat weeks must be between 1 and 52."}), 400
+
+    if repeat_until_str and repeat_weeks is not None:
+        return jsonify({"error": "Use either repeat_until or repeat_weeks, not both."}), 400
+
     try:
         if repeat_until_str:
             repeat_until_date = date.fromisoformat(repeat_until_str)
@@ -122,7 +137,6 @@ def book(user_id, role):
     if repeat_until_date < booking_date:
         return jsonify({"error": "Repeat-until date cannot be before the booking date."}), 400
 
-    total_days = (repeat_until_date - booking_date).days + 1
     booking_group_id = str(uuid.uuid4())
 
     try:
@@ -136,26 +150,56 @@ def book(user_id, role):
         if cur.fetchone() is None:
             return jsonify({"error": "Selected purpose is not a valid event."}), 400
 
-        for day_offset in range(total_days):
-            day_date = booking_date + timedelta(days=day_offset)
-            cur.execute(
-                """
-                INSERT INTO bookings (booking_group_id, user_id, purpose, attendees, booking_date, start_time, end_time, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
-                """,
-                (
-                    booking_group_id,
-                    user_id,
-                    data["purpose"],
-                    data["attendees"],
-                    day_date,
-                    start_tm,
-                    end_tm,
+        if repeat_weeks is not None:
+            occurrence_count = repeat_weeks
+            for week_offset in range(repeat_weeks):
+                day_date = booking_date + timedelta(weeks=week_offset)
+                cur.execute(
+                    """
+                    INSERT INTO bookings (booking_group_id, user_id, purpose, attendees, booking_date, start_time, end_time, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+                    """,
+                    (
+                        booking_group_id,
+                        user_id,
+                        data["purpose"],
+                        data["attendees"],
+                        day_date,
+                        start_tm,
+                        end_tm,
+                    )
                 )
-            )
+        else:
+            total_days = (repeat_until_date - booking_date).days + 1
+            occurrence_count = total_days
+            for day_offset in range(total_days):
+                day_date = booking_date + timedelta(days=day_offset)
+                cur.execute(
+                    """
+                    INSERT INTO bookings (booking_group_id, user_id, purpose, attendees, booking_date, start_time, end_time, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
+                    """,
+                    (
+                        booking_group_id,
+                        user_id,
+                        data["purpose"],
+                        data["attendees"],
+                        day_date,
+                        start_tm,
+                        end_tm,
+                    )
+                )
+
+        conn.commit()
+
+        repeat_desc = (
+            f"repeat weekly for {repeat_weeks} weeks"
+            if repeat_weeks is not None
+            else f"repeat until {repeat_until_date}"
+        )
 
         insert_audit_log(
-            f"Booking request created by {user_name} for {booking_date} {start_tm}-{end_tm} (repeat until {repeat_until_date})",
+            f"Booking request created by {user_name} for {booking_date} {start_tm}-{end_tm} ({repeat_desc})",
             user_name,
             performed_by_id=user_id,
             details={
@@ -164,10 +208,15 @@ def book(user_id, role):
                 "booking_group_id": booking_group_id,
                 "purpose": data.get("purpose"),
                 "attendees": data.get("attendees"),
-                "repeat_until": str(repeat_until_date),
+                "repeat_weeks": repeat_weeks,
+                "repeat_until": str(repeat_until_date) if repeat_until_str else None,
             },
         )
-        return jsonify({"message": f"Booking request submitted for {total_days} day(s)."})
+
+        if repeat_weeks is not None:
+            return jsonify({"message": f"Booking request submitted for {occurrence_count} weekly occurrence(s)."})
+
+        return jsonify({"message": f"Booking request submitted for {occurrence_count} day(s)."})
 
     except Exception as e:
         conn.rollback()

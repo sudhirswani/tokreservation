@@ -10,6 +10,7 @@ export default function Dashboard() {
     start_time: "",
     end_time: "",
     repeat_until: "",
+    repeat_weeks: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -26,7 +27,15 @@ export default function Dashboard() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      if (name === "repeat_until") {
+        return { ...prev, repeat_until: value, repeat_weeks: value ? "" : prev.repeat_weeks };
+      }
+      if (name === "repeat_weeks") {
+        return { ...prev, repeat_weeks: value, repeat_until: value ? "" : prev.repeat_until };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleBooking = async (event) => {
@@ -40,7 +49,7 @@ export default function Dashboard() {
         type: "success",
         message: data?.message || "Booking request submitted! You'll be notified after review.",
       });
-      setForm({ purpose: "", attendees: "", booking_date: "", start_time: "", end_time: "", repeat_until: "" });
+      setForm({ purpose: "", attendees: "", booking_date: "", start_time: "", end_time: "", repeat_until: "", repeat_weeks: "" });
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -608,10 +617,33 @@ export default function Dashboard() {
                       className="form-control"
                       value={form.repeat_until}
                       onChange={handleInputChange}
-                        min={form.booking_date || undefined}
+                      min={form.booking_date || undefined}
+                      disabled={Boolean(form.repeat_weeks)}
                     />
                     <div className="form-text">
                       Leave blank to request a single day. When filled, the same time slot will be booked each day through the selected date.
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="repeat_weeks" className="form-label">
+                      Repeat weekly for next number of weeks (optional)
+                    </label>
+                    <input
+                      id="repeat_weeks"
+                      name="repeat_weeks"
+                      type="number"
+                      min="1"
+                      max="52"
+                      step="1"
+                      className="form-control"
+                      placeholder="e.g. 4"
+                      value={form.repeat_weeks}
+                      onChange={handleInputChange}
+                      disabled={Boolean(form.repeat_until)}
+                    />
+                    <div className="form-text">
+                      Enter 1–52 weeks to request the same weekday/time for that many weekly occurrences. Leave blank to request a single day.
                     </div>
                   </div>
 
@@ -668,9 +700,9 @@ export default function Dashboard() {
                   <li className="d-flex gap-3 mb-3">
                     <span className="badge bg-primary-subtle text-primary">2</span>
                     <div>
-                      <h6 className="mb-1">Multi-day slots</h6>
+                      <h6 className="mb-1">Repeat options</h6>
                       <p className="mb-0 small text-muted">
-                        Use the "Repeat until" field to request the same time window across consecutive days in a single submission.
+                        Use the daily repeat field to request the same time window across consecutive days, or use the weekly repeat field to book the same weekday/time for up to 52 weeks.
                       </p>
                     </div>
                   </li>
