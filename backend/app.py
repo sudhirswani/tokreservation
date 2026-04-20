@@ -24,7 +24,9 @@ CORS(app, origins=[
     "https://tokreservation.vercel.app"
 ], supports_credentials=True)
 DATABASE_URL = os.getenv("DATABASE_URL")
+#print("DATABASE_URL:", DATABASE_URL)
 conn = psycopg2.connect(DATABASE_URL or "postgresql://postgres.aijoxnrsgaietqkhbopg:E1ryNPiQby2hTp39@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres")
+#conn = psycopg2.connect(DATABASE_URL or "postgresql://postgres:jgd*13may@localhost:5432/tokreservation_local")
 SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")  # same as used in login
 
 def get_db_connection():
@@ -285,13 +287,14 @@ def signup():
         cur = get_db_connection().cursor()
 
         cur.execute("""
-            INSERT INTO users (name, email, mobile, password)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO users (name, email, mobile, teacher_code, password)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING id
         """, (
             data["name"],
             data["email"],
             data["mobile"],
+            data["teacher_code"],
             data["password"]
         ))
 
@@ -304,6 +307,7 @@ def signup():
             details={
                 "email": data.get("email"),
                 "mobile": data.get("mobile"),
+                "teacher_code": data.get("teacher_code"),
             },
         )
 
@@ -311,6 +315,16 @@ def signup():
 
     except Exception as e:
         conn.rollback()
+        error_message = str(e).lower()
+        
+        # Check for duplicate email constraint violation
+        if "users_email_key" in error_message or ("duplicate key" in error_message and "email" in error_message):
+            return jsonify({"error": "User with this email already exists. Please use a different email or sign in."}), 400
+        
+        # Check for duplicate mobile or teacher_code constraints if they exist
+        if "duplicate key" in error_message:
+            return jsonify({"error": "This information is already registered. Please use different details."}), 400
+        
         return jsonify({"error": str(e)}), 500
     
 @app.route("/login", methods=["POST"])

@@ -7,6 +7,7 @@ export default function Signup() {
     name: "",
     email: "",
     mobile: "",
+    teacher_code: "",
     password: "",
   });
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,6 +22,7 @@ export default function Signup() {
     form.name.trim() !== "" &&
     form.email.trim() !== "" &&
     form.mobile.trim() !== "" &&
+    form.teacher_code.trim() !== "" &&
     form.password !== "" &&
     confirmPassword !== "" &&
     form.password === confirmPassword &&
@@ -153,6 +155,22 @@ export default function Signup() {
                       className="form-control form-control-lg"
                       placeholder="e.g. +1 555 123 4567"
                       value={form.mobile}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label htmlFor="teacher_code" className="form-label">
+                      Teacher Code
+                    </label>
+                    <input
+                      id="teacher_code"
+                      name="teacher_code"
+                      type="text"
+                      className="form-control form-control-lg"
+                      placeholder="Enter your teacher code"
+                      value={form.teacher_code}
                       onChange={handleChange}
                       required
                     />
