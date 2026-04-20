@@ -336,6 +336,24 @@ export default function Dashboard() {
               </div>
             </div>
 
+            <div className="mb-3 p-3 bg-white border rounded">
+              <div className="small fw-semibold mb-2">Booking Status Legend:</div>
+              <div className="d-flex flex-wrap gap-3">
+                <div className="d-flex align-items-center gap-2">
+                  <div className="bg-warning rounded" style={{ width: "16px", height: "16px" }}></div>
+                  <span className="small">Pending - Awaiting admin review</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <div className="bg-success rounded" style={{ width: "16px", height: "16px" }}></div>
+                  <span className="small">Confirmed - Booking approved</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <div className="bg-danger rounded" style={{ width: "16px", height: "16px" }}></div>
+                  <span className="small">Rejected - Booking declined</span>
+                </div>
+              </div>
+            </div>
+
             <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
               <button className="btn btn-sm btn-outline-secondary" onClick={() => changeCalendarDate(-1)}>
                 Previous
@@ -717,7 +735,7 @@ export default function Dashboard() {
                   </li>
                 </ul>
                 <div className="bg-primary-subtle rounded-3 p-3 small text-primary">
-                  Need help? Reach out to the admin team to update or cancel an existing booking.
+                  Need help? Reach out to the admin team @ 7888072794 or 9421053029 to update or cancel an existing booking.
                 </div>
               </div>
             </div>
