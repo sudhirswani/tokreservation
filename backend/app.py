@@ -7,6 +7,8 @@ import os
 import jwt
 import uuid
 import json
+import random
+import string
 import datetime
 from datetime import date, time, timedelta
 from functools import wraps
@@ -33,6 +35,21 @@ def get_db_connection():
     except Exception:
         conn = psycopg2.connect(DATABASE_URL or "postgresql://postgres.aijoxnrsgaietqkhbopg:E1ryNPiQby2hTp39@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres")
     return conn
+
+CAPTCHA_STORE = {}
+CAPTCHA_TTL_MINUTES = 5
+
+
+def cleanup_captcha_store():
+    now = datetime.datetime.utcnow()
+    expired_keys = [key for key, value in CAPTCHA_STORE.items() if value["expires_at"] <= now]
+    for key in expired_keys:
+        CAPTCHA_STORE.pop(key, None)
+
+
+def generate_captcha_code(length=5):
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 
 def get_user_info(user_id):
     cur = get_db_connection().cursor()
@@ -238,10 +255,33 @@ def event_names(user_id, role):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/captcha", methods=["GET"])
+def captcha():
+    cleanup_captcha_store()
+    captcha_id = str(uuid.uuid4())
+    captcha_code = generate_captcha_code()
+    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=CAPTCHA_TTL_MINUTES)
+    CAPTCHA_STORE[captcha_id] = {"code": captcha_code, "expires_at": expires_at}
+    return jsonify({"captcha_id": captcha_id, "captcha_code": captcha_code})
+
+
 @app.route("/signup", methods=["POST"])
 def signup():
     try:
         data = request.json
+
+        captcha_id = data.get("captcha_id")
+        captcha_answer = (data.get("captcha_answer") or "").strip().upper()
+
+        if not captcha_id or not captcha_answer:
+            return jsonify({"error": "Captcha verification is required."}), 400
+
+        cleanup_captcha_store()
+        captcha_entry = CAPTCHA_STORE.pop(captcha_id, None)
+
+        if not captcha_entry or captcha_entry.get("code", "").upper() != captcha_answer:
+            return jsonify({"error": "Captcha verification failed."}), 400
+
         cur = get_db_connection().cursor()
 
         cur.execute("""

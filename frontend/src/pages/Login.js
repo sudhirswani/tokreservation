@@ -38,7 +38,7 @@ export default function Login() {
           <div className="col-sm-10 col-md-8 col-lg-5">
             <div className="card shadow-sm border-0">
               <div className="card-body p-4 p-md-5">
-                <h1 className="h3 mb-1 fw-bold text-center">Welcome back</h1>
+                <h1 className="h3 mb-1 fw-bold text-center">Art Of Living Centre Warje</h1>
                 <p className="text-muted text-center mb-4">
                   Sign in to manage your meditation hall bookings.
                 </p>

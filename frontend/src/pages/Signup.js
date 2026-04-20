@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
 
@@ -9,22 +9,80 @@ export default function Signup() {
     mobile: "",
     password: "",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [captcha, setCaptcha] = useState({ id: "", code: "" });
+  const [captchaInput, setCaptchaInput] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const canSubmit =
+    !isSubmitting &&
+    form.name.trim() !== "" &&
+    form.email.trim() !== "" &&
+    form.mobile.trim() !== "" &&
+    form.password !== "" &&
+    confirmPassword !== "" &&
+    form.password === confirmPassword &&
+    captchaInput.trim() !== "" &&
+    captcha.id !== "";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleConfirmPasswordChange = (event) => {
+    setConfirmPassword(event.target.value);
+  };
+
+  const handleCaptchaInputChange = (event) => {
+    setCaptchaInput(event.target.value);
+  };
+
+  const loadCaptcha = async () => {
+    try {
+      const response = await API.get("/captcha");
+      setCaptcha({
+        id: response.data.captcha_id,
+        code: response.data.captcha_code,
+      });
+      setCaptchaInput("");
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: "Unable to load captcha. Please refresh the page.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
+
   const handleSignup = async (event) => {
     event.preventDefault();
     setStatus({ type: "", message: "" });
+
+    if (form.password !== confirmPassword) {
+      setStatus({ type: "error", message: "Passwords do not match." });
+      return;
+    }
+
+    if (!captcha.id || captchaInput.trim().toUpperCase() !== captcha.code.trim().toUpperCase()) {
+      setStatus({ type: "error", message: "Captcha does not match. Please try again." });
+      loadCaptcha();
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await API.post("/signup", form);
+      await API.post("/signup", {
+        ...form,
+        captcha_id: captcha.id,
+        captcha_answer: captchaInput,
+      });
       setStatus({ type: "success", message: "Account created! Redirecting to login..." });
       setTimeout(() => navigate("/login"), 800);
     } catch (err) {
@@ -33,6 +91,7 @@ export default function Signup() {
         err.response?.data?.error ||
         "Signup failed. Please verify the form details and try again.";
       setStatus({ type: "error", message });
+      loadCaptcha();
     } finally {
       setIsSubmitting(false);
     }
@@ -99,7 +158,7 @@ export default function Signup() {
                     />
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <label htmlFor="password" className="form-label">
                       Password
                     </label>
@@ -116,10 +175,67 @@ export default function Signup() {
                     />
                   </div>
 
+                  <div className="mb-3">
+                    <label htmlFor="confirmPassword" className="form-label">
+                      Confirm password
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      className={`form-control form-control-lg ${
+                        confirmPassword && confirmPassword !== form.password
+                          ? "is-invalid"
+                          : ""
+                      }`}
+                      placeholder="Re-enter your password"
+                      value={confirmPassword}
+                      onChange={handleConfirmPasswordChange}
+                      minLength={6}
+                      required
+                      aria-invalid={confirmPassword && confirmPassword !== form.password}
+                    />
+                    {confirmPassword && confirmPassword !== form.password && (
+                      <div className="invalid-feedback">Passwords must match.</div>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="form-label">Captcha verification</label>
+                    <div className="d-flex align-items-center mb-2">
+                      <div
+                        className="border rounded px-3 py-2 bg-white text-center"
+                        style={{ letterSpacing: "0.25em", minWidth: "150px" }}
+                      >
+                        {captcha.code || "Loading..."}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm ms-2"
+                        onClick={loadCaptcha}
+                      >
+                        Refresh
+                      </button>
+                    </div>
+                    <input
+                      id="captchaInput"
+                      name="captchaInput"
+                      type="text"
+                      className="form-control form-control-lg"
+                      placeholder="Type the code shown above"
+                      value={captchaInput}
+                      onChange={handleCaptchaInputChange}
+                      required
+                    />
+                    <div className="form-text">
+                      Please type the code exactly as shown to verify human input.
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     className="btn btn-success w-100 btn-lg"
-                    disabled={isSubmitting}
+                    disabled={!canSubmit}
                   >
                     {isSubmitting ? (
                       <>
